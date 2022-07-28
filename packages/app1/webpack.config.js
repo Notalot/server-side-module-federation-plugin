@@ -4,8 +4,8 @@ const ServerSideModuleFederationPlugin = require("server-side-module-federation-
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 const remotes = (remoteType) => ({
-  app2: `${remoteType === "client" ? "app2@" : ""}http://localhost:8080/${remoteType}/app2.js`,
-  app3: `${remoteType === "client" ? "app3@" : ""}http://localhost:8081/${remoteType}/app3.js`,
+  app2: `${remoteType === "client" ? "app2@" : ""}http://localhost:3002/${remoteType}/app2.js`,
+  app3: `${remoteType === "client" ? "app3@" : ""}http://localhost:3003/${remoteType}/app3.js`,
 });
 
 const shared = { react: { singleton: true }, "react-dom": { singleton: true } };
@@ -41,7 +41,7 @@ const serverConfig = {
     path: path.join(__dirname, "dist/server"),
     libraryTarget: "commonjs-module",
     chunkLoading: "async-http-node",
-    publicPath: "http://localhost:3000/server/",
+    publicPath: "http://localhost:3009/server/",
   },
   target: "node",
   plugins: [
@@ -77,15 +77,12 @@ const clientConfig = {
   output: {
     path: path.join(__dirname, "dist/client"),
   },
-  target: "node",
+  target: "web",
   plugins: [
     new webpack.container.ModuleFederationPlugin({
       name: "app1",
       remotes: remotes("client"),
       shared,
-    }),
-    new HtmlWebpackPlugin({
-      template: "index.ejs",
     }),
   ],
   stats: { errorDetails: true },

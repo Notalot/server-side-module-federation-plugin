@@ -3,7 +3,7 @@ const path = require("path");
 const ServerSideModuleFederationPlugin = require("server-side-module-federation-plugin");
 
 const exposes = {
-  "./Shared": "./src/Shared",
+  "./Shared": "./src/shared",
 };
 
 const shared = { react: { singleton: true }, "react-dom": { singleton: true } };
@@ -37,7 +37,7 @@ const serverConfig = {
     path: path.join(__dirname, "dist/server"),
     libraryTarget: "commonjs-module",
     chunkLoading: "async-http-node",
-    publicPath: "http://localhost:8080/server/",
+    publicPath: "http://localhost:3002/server/",
   },
   entry: {},
   target: "node",
@@ -50,9 +50,10 @@ const serverConfig = {
     }),
   ],
   devServer: {
-    writeToDisk: true,
-    port: 8080,
-    contentBase: "dist",
+    devMiddleware: {
+      writeToDisk: true,
+    },
+    port: 3002,
   },
 };
 
@@ -75,7 +76,7 @@ const clientConfig = {
     path: path.join(__dirname, "dist/client"),
   },
   entry: {},
-  target: "node",
+  target: "web",
   plugins: [
     new webpack.container.ModuleFederationPlugin({
       name: "app2",

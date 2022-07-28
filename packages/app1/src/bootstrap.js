@@ -1,7 +1,14 @@
-import shared2 from "app2/shared";
-import shared3 from "app3/shared";
-console.log("hi");
-(async () => {
-  console.log(await shared2());
-  console.log(await shared3());
-})();
+import React from 'react';
+import ReactDOM from 'react-dom';
+import App from './components/App';
+
+const render = App => {
+  const root = document.getElementById('root');
+
+  ReactDOM.hydrate(
+    <App />,
+    root,
+  );
+};
+
+render(App);

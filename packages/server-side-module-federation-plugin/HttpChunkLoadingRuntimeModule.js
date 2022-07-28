@@ -28,7 +28,7 @@ class HttpChunkLoadingRuntimeModule extends RuntimeModule {
       chunk,
       contentHashType: "javascript",
     });
-    const rootOutputDir = getUndoPath(outputName, false);
+    const rootOutputDir = getUndoPath(outputName, outputName, false);
 
     return Template.asString([
       "// object to store loaded chunks",

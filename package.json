@@ -13,6 +13,7 @@
     "build": "lage build",
     "lage": "lage",
     "start": "lage start --verbose",
+    "startHostForGusa": "cd packages/app3 && yarn startForGusa",
     "release": "beachball publish -y -b origin/main",
     "checkchange": "beachball check -b origin/main",
     "change": "beachball change -b origin/main"
@@ -24,10 +25,10 @@
     "babel-loader": "^8.2.2",
     "beachball": "^1.47.1",
     "lage": "^0.29.0",
-    "webpack": "^5.10.0",
-    "webpack-cli": "^4.2.0",
-    "webpack-dev-server": "^3.11.0",
-    "webpack-merge": "^5.7.3",
-    "html-webpack-plugin": "^5.0.0"
+    "webpack": "^5.73.0",
+    "webpack-cli": "^4.10.0",
+    "webpack-dev-server": "^4.9.3",
+    "webpack-merge": "^5.8.0",
+    "html-webpack-plugin": "^5.5.0"
   }
 }

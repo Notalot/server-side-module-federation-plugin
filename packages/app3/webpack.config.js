@@ -3,18 +3,18 @@ const path = require("path");
 const ServerSideModuleFederationPlugin = require("server-side-module-federation-plugin");
 
 const remotes = (remoteType) => ({
-  app2: `${remoteType === "client" ? "app2@" : ""}http://localhost:8080/${remoteType}/app2.js`,
-  app3: `${remoteType === "client" ? "app3@" : ""}http://localhost:8081/${remoteType}/app3.js`,
+  app2: `${remoteType === "client" ? "app2@" : ""}http://localhost:3002/${remoteType}/app2.js`,
 });
 
 const exposes = {
-  "./Shared": "./src/Shared",
+  "./Shared": "./src/shared",
 };
 
 const shared = { react: { singleton: true }, "react-dom": { singleton: true } };
 
 const serverConfig = {
   optimization: { minimize: false },
+  mode: 'development',
   module: {
     rules: [
       {
@@ -39,10 +39,10 @@ const serverConfig = {
     ],
   },
   output: {
-    path: path.join(__dirname, "dist/server"),
+    path: path.join(__dirname, process.env.GUSA ? "dist/serverForGusa" : "dist/server"),
     libraryTarget: "commonjs-module",
     chunkLoading: "async-http-node",
-    publicPath: "http://localhost:8081/server/",
+    publicPath: process.env.GUSA ? 'https://glassesusa.dev/godnota/serverForGusa/' : "http://localhost:3003/server/",
   },
   entry: {},
   target: "node",
@@ -59,14 +59,20 @@ const serverConfig = {
     errorDetails: true,
   },
   devServer: {
-    writeToDisk: true,
-    port: 8081,
-    contentBase: "dist",
+    port: process.env.GUSA ? 3004 : 3003,
+    devMiddleware: {
+      writeToDisk: true,
+    },
+    static: {
+      directory: 'dist'
+    },
+    allowedHosts: 'all',
   },
 };
 
 const clientConfig = {
   optimization: { minimize: false },
+  mode: 'development',
   module: {
     rules: [
       {

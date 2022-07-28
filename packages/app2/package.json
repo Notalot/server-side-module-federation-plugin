@@ -11,6 +11,6 @@
   "devDependencies": {
     "server-side-module-federation-plugin": "*",
     "http-server": "^0.12.3",
-    "react": "^17.0.1"
+    "react": "^17.0.2"
   }
 }
