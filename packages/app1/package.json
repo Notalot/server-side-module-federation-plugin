@@ -8,7 +8,7 @@
     "build": "webpack",
     "start:webpack": "webpack -w",
     "start:server": "nodemon src/server.cjs",
-    "start": "concurrently \"npm:start:webpack\" \"npm:start:server\"",
+    "start": "npx kill-port 3009 && concurrently \"npm:start:webpack\" \"npm:start:server\"",
     "test": "node test.js"
   },
   "dependencies": {

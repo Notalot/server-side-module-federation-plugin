@@ -1,6 +1,8 @@
 const webpack = require("webpack");
 const path = require("path");
 const ServerSideModuleFederationPlugin = require("server-side-module-federation-plugin");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const WebpackAssetsManifest = require('webpack-assets-manifest');
 
 const remotes = (remoteType) => ({
   app2: `${remoteType === "client" ? "app2@" : ""}http://localhost:3002/${remoteType}/app2.js`,
@@ -10,13 +12,36 @@ const exposes = {
   "./Shared": "./src/shared",
 };
 
-const shared = { react: { singleton: true }, "react-dom": { singleton: true } };
+const shared = { 
+  react: { singleton: true }, 
+  "react-dom": { singleton: true },
+  "@optimaxdev/utils": { singleton: true },
+};
 
 const serverConfig = {
   optimization: { minimize: false },
   mode: 'development',
   module: {
     rules: [
+      {
+        test:  /\.css$/,
+        use: [
+          { 
+            loader: "css-collector",
+            options: {
+              source: 'app3',
+            }
+          }, 
+          {
+            loader: "css-loader",
+            options: {
+              modules: {
+                exportOnlyLocals: true
+              },
+            },
+          }
+        ],
+      },
       {
         test: /\.jsx?/,
         use: {
@@ -58,6 +83,11 @@ const serverConfig = {
   stats: {
     errorDetails: true,
   },
+  resolveLoader: {
+    alias: {
+      'css-collector': path.resolve(__dirname, 'style-collector.loader.js'),
+    },
+  },
   devServer: {
     port: process.env.GUSA ? 3004 : 3003,
     devMiddleware: {
@@ -71,10 +101,23 @@ const serverConfig = {
 };
 
 const clientConfig = {
-  optimization: { minimize: false },
-  mode: 'development',
+  mode: 'production',
+  optimization: { 
+    minimize: false,
+    chunkIds: 'named',
+    moduleIds: 'named', 
+  },
   module: {
     rules: [
+      {
+        test:  /\.css$/,
+        use: [
+          {
+            loader: MiniCssExtractPlugin.loader,
+          }, {
+            loader: "css-loader",
+          }],
+      },
       {
         test: /\.jsx?/,
         use: {
@@ -88,6 +131,10 @@ const clientConfig = {
   },
   entry: {},
   plugins: [
+    new WebpackAssetsManifest(),
+    new MiniCssExtractPlugin({
+      filename: '[name].css',
+    }),
     new webpack.container.ModuleFederationPlugin({
       name: "app3",
       exposes,
@@ -96,6 +143,7 @@ const clientConfig = {
     }),
   ],
   output: {
+    clean: true,
     path: path.join(__dirname, "dist/client"),
   },
   stats: {
