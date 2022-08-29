@@ -2,7 +2,6 @@ const webpack = require("webpack");
 const path = require("path");
 const ServerSideModuleFederationPlugin = require("server-side-module-federation-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-const WebpackAssetsManifest = require('webpack-assets-manifest');
 
 const remotes = (remoteType) => ({
   app2: `${remoteType === "client" ? "app2@" : ""}http://localhost:3002/${remoteType}/app2.js`,
@@ -15,29 +14,26 @@ const exposes = {
 const shared = { 
   react: { singleton: true }, 
   "react-dom": { singleton: true },
-  "@optimaxdev/utils": { singleton: true },
 };
 
 const serverConfig = {
-  optimization: { minimize: false },
-  mode: 'development',
+  mode: 'production',
+  optimization: {
+    chunkIds: 'deterministic',
+    moduleIds: 'deterministic',  
+  },
   module: {
     rules: [
       {
         test:  /\.css$/,
         use: [
-          { 
-            loader: "css-collector",
-            options: {
-              source: 'app3',
-            }
-          }, 
+          {
+            loader: MiniCssExtractPlugin.loader,
+          },
           {
             loader: "css-loader",
             options: {
-              modules: {
-                exportOnlyLocals: true
-              },
+              modules: true,
             },
           }
         ],
@@ -64,6 +60,7 @@ const serverConfig = {
     ],
   },
   output: {
+    clean: true,
     path: path.join(__dirname, process.env.GUSA ? "dist/serverForGusa" : "dist/server"),
     libraryTarget: "commonjs-module",
     chunkLoading: "async-http-node",
@@ -72,6 +69,10 @@ const serverConfig = {
   entry: {},
   target: "node",
   plugins: [
+    new MiniCssExtractPlugin({
+      runtime: false,
+      filename: '[contenthash].css'
+    }),
     new ServerSideModuleFederationPlugin({
       name: "app3",
       library: { type: "commonjs-module" },
@@ -82,11 +83,6 @@ const serverConfig = {
   ],
   stats: {
     errorDetails: true,
-  },
-  resolveLoader: {
-    alias: {
-      'css-collector': path.resolve(__dirname, 'style-collector.loader.js'),
-    },
   },
   devServer: {
     port: process.env.GUSA ? 3004 : 3003,
@@ -102,10 +98,9 @@ const serverConfig = {
 
 const clientConfig = {
   mode: 'production',
-  optimization: { 
-    minimize: false,
-    chunkIds: 'named',
-    moduleIds: 'named', 
+  optimization: {
+    chunkIds: 'deterministic',
+    moduleIds: 'deterministic',  
   },
   module: {
     rules: [
@@ -116,6 +111,9 @@ const clientConfig = {
             loader: MiniCssExtractPlugin.loader,
           }, {
             loader: "css-loader",
+            options: {
+              modules: true,
+            },
           }],
       },
       {
@@ -131,9 +129,8 @@ const clientConfig = {
   },
   entry: {},
   plugins: [
-    new WebpackAssetsManifest(),
     new MiniCssExtractPlugin({
-      filename: '[name].css',
+      filename: '[contenthash].css'
     }),
     new webpack.container.ModuleFederationPlugin({
       name: "app3",

@@ -2,10 +2,8 @@ import { renderToString } from "react-dom/server";
 import React from "react";
 import App from "../components/App";
 
-import {styleCollector} from '@optimaxdev/utils';
-
-export default () => {
-  const [html, css] = styleCollector.collectStyles(() => renderToString(<App />));
+export default (useApp2 = false) => {
+  const html = renderToString(<App useApp2={useApp2} />);
   
-  return { html, css };
+  return { html, css: global.css || [] };
 };

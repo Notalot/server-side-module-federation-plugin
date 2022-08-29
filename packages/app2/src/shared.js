@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import styles from './shared.css';
 
 export default function Shared() {
   const [state, setState] = useState('Hey!');
@@ -6,5 +7,5 @@ export default function Shared() {
     console.log('HOOK FROM APP2');
     setState('Hello!')
   }, []);
-  return <div>{state} I'm from App2</div>;
+  return <div className={styles.b}>{state} I'm from App2</div>;
 }

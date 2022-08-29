@@ -2,7 +2,6 @@ const webpack = require("webpack");
 const path = require("path");
 const ServerSideModuleFederationPlugin = require("server-side-module-federation-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-const WebpackAssetsManifest = require('webpack-assets-manifest');
 
 const remotes = (remoteType) => ({
   app2: `${remoteType === "client" ? "app2@" : ""}http://localhost:3002/${remoteType}/app2.js`,
@@ -12,35 +11,26 @@ const remotes = (remoteType) => ({
 const shared = { 
   react: { singleton: true }, 
   "react-dom": { singleton: true },
-  "@optimaxdev/utils": { singleton: true },
 };
 
 const serverConfig = {
   mode: 'production',
-  optimization: { minimize: false },
+  optimization: {
+    chunkIds: 'deterministic',
+    moduleIds: 'deterministic',  
+  },
   module: {
     rules: [
       {
-        test:  /\.json$/,
-        use: {
-          loader: "json-loader",
-        }
-      },
-      {
         test:  /\.css$/,
         use: [
-          { 
-            loader: "css-collector",
-            options: {
-              source: 'root',
-            }
-          }, 
+          {
+            loader: MiniCssExtractPlugin.loader,
+          },
           {
             loader: "css-loader",
             options: {
-              modules: {
-                exportOnlyLocals: true
-              },
+              modules: true,
             },
           }
         ],
@@ -61,7 +51,6 @@ const serverConfig = {
               ],
               "@babel/preset-react",
             ],
-            plugins: ["@loadable/babel-plugin"]
           },
         },
       },
@@ -78,7 +67,10 @@ const serverConfig = {
   },
   target: "node",
   plugins: [
-    new MiniCssExtractPlugin(),
+    new MiniCssExtractPlugin({
+      runtime: false,
+      filename: '[contenthash].css'
+    }),
     new ServerSideModuleFederationPlugin({
       name: "app1",
       library: { type: "commonjs-module" },
@@ -88,18 +80,20 @@ const serverConfig = {
   ],
   stats: { errorDetails: true },
   devServer: {
-    writeToDisk: true,
-  },
-  resolveLoader: {
-    alias: {
-      'css-collector': path.resolve(__dirname, 'style-collector.loader.js'),
+    hot: false,
+    static: {
+      directory: 'dist'
     },
+    writeToDisk: true,
   },
 };
 
 const clientConfig = {
   mode: 'production',
-  optimization: { minimize: false },
+  optimization: {
+    chunkIds: 'deterministic',
+    moduleIds: 'deterministic',  
+  },
   module: {
     rules: [
       {
@@ -110,7 +104,6 @@ const clientConfig = {
           }, {
             loader: "css-loader",
             options: {
-              url: true,
               modules: true,
             },
           }],
@@ -130,12 +123,12 @@ const clientConfig = {
   output: {
     clean: true, 
     path: path.join(__dirname, "dist/client"),
+    filename: 'main.js',
   },
   target: "web",
   plugins: [
-    new WebpackAssetsManifest(),
     new MiniCssExtractPlugin({
-      chunkFilename: '[name].css',
+      filename: '[contenthash].css'
     }),
     new webpack.container.ModuleFederationPlugin({
       name: "app1",

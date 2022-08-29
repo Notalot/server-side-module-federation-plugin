@@ -7,7 +7,10 @@ const HttpChunkLoadingRuntimeModule = require("./HttpChunkLoadingRuntimeModule")
 const HttpLoadRuntimeModule = require("./HttpLoadRuntimeModule");
 const NodeHttpExternalModule = require("./NodeHttpExternalModule");
 
+const {compareModulesByIdentifier} = require("mini-css-extract-plugin/dist/utils");
+
 const { parseOptions } = require("webpack/lib/container/options");
+const { config } = require("webpack");
 
 /** @typedef {import("webpack/lib/Compiler")} Compiler */
 
@@ -35,7 +38,7 @@ class ServerSideModuleFederationPlugin {
    * @returns {void}
    */
   apply(compiler) {
-    const { _remotes: remotes, _remoteType: remoteType } = this;
+    const { _remotes: remotes, _remoteType: remoteType, _options: { name }} = this;
 
     /** @type {Record<string, string>} */
     const remoteExternals = {};
@@ -98,6 +101,149 @@ class ServerSideModuleFederationPlugin {
         }
       });
 
+      const miniExtractModule = "css/mini-extract";
+
+      const { RuntimeGlobals, RuntimeModule, Template, runtime } = webpack;
+
+      const getCssChunkObject = (mainChunk, compilation) => {
+        /** @type {Record<string, number>} */
+        const obj = {};
+        const { chunkGraph } = compilation;
+
+        for (const chunk of mainChunk.getAllAsyncChunks()) {
+          const modules = chunkGraph.getOrderedChunkModulesIterable(
+            chunk,
+            compareModulesByIdentifier
+          );
+
+          for (const module of modules) {
+            if (module.type === miniExtractModule) {
+              obj[/** @type {string} */ (chunk.id)] = 1;
+
+              break;
+            }
+          }
+        }
+
+        return obj;
+      };
+
+      class CssLoadingRuntimeModule extends RuntimeModule {
+        /**
+         * @param {Set<string>} runtimeRequirements
+         * @param {RuntimeOptions} runtimeOptions
+         */
+        constructor(runtimeRequirements) {
+          super("css loading", 10);
+
+          this.runtimeRequirements = runtimeRequirements;
+        }
+        generate() {
+          const { chunk, runtimeRequirements } = this;
+          const {
+            runtimeTemplate,
+            outputOptions: { crossOriginLoading },
+          } = this.compilation;
+          
+          const chunkMap = getCssChunkObject(chunk, this.compilation);
+
+          const withLoading =
+            runtimeRequirements.has(RuntimeGlobals.ensureChunkHandlers) &&
+            Object.keys(chunkMap).length > 0;
+
+          if (!withLoading) {
+            return "";
+          }
+
+          return Template.asString([
+            `var createStylesheet = ${runtimeTemplate.basicFunction(
+              "chunkId, fullhref, resolve, reject",
+              [
+                `if (!global.css.includes(fullhref)) global.css.push(fullhref);`,
+                Template.indent(["resolve();"]),
+              ]
+            )}`,
+            `var loadStylesheet = ${runtimeTemplate.basicFunction(
+              "chunkId",
+              `return new Promise(${runtimeTemplate.basicFunction(
+                "resolve, reject",
+                [
+                  `var href = ${RuntimeGlobals.require}.miniCssF(chunkId);`,
+                  `var fullhref = ${RuntimeGlobals.publicPath} + href;`,
+                  "createStylesheet(chunkId, fullhref, resolve, reject);",
+                ]
+              )});`,
+            )}`,
+            withLoading
+              ? Template.asString([
+                  "// object to store loaded CSS chunks",
+                  "var installedCssChunks = {",
+                  Template.indent(
+                    /** @type {string[]} */
+                    (chunk.ids)
+                      .map((id) => `${JSON.stringify(id)}: 0`)
+                      .join(",\n")
+                  ),
+                  "};",
+                  "",
+                  `${
+                    RuntimeGlobals.ensureChunkHandlers
+                  }.miniCss = ${runtimeTemplate.basicFunction(
+                    "chunkId, promises",
+                    [
+                      `var cssChunks = ${JSON.stringify(chunkMap)};`,
+                      `global.css = [...(global.css || [])];`,
+                      `loadStylesheet(chunkId);`,
+                    ]
+                  )};`,
+                ])
+              : "// no chunk loading",
+            "",
+          ]);
+        }
+      };
+
+      const enabledChunks = new WeakSet();
+
+      compilation.hooks.runtimeRequirementInTree
+        .for(RuntimeGlobals.ensureChunkHandlers)
+        .tap("mini-css-extract-plugin", (chunk, set) => {
+          if (enabledChunks.has(chunk)) {
+            return;
+          }
+  
+          enabledChunks.add(chunk);
+  
+          set.add(RuntimeGlobals.publicPath);
+  
+          compilation.addRuntimeModule(
+            chunk,
+            new runtime.GetChunkFilenameRuntimeModule(
+              miniExtractModule,
+              "mini-css",
+              `${RuntimeGlobals.require}.miniCssF`,
+              /**
+               * @param {Chunk} referencedChunk
+               * @returns {TODO}
+               */
+              (referencedChunk) => {
+                if (!referencedChunk.contentHash[miniExtractModule]) {
+                  return false;
+                }
+  
+                // TODO
+                return '[contenthash].css';
+              },
+              false
+            )
+          );
+  
+          compilation.addRuntimeModule(
+            chunk,
+            new CssLoadingRuntimeModule(set)
+          );
+        });
+      
       compilation.hooks.additionalTreeRuntimeRequirements.tap("NodeHttpChunkLoadingPlugin", (chunk, set) => {
         const m = new HttpLoadRuntimeModule(set);
         compilation.addRuntimeModule(chunk, m);
