@@ -14,6 +14,7 @@
     "lage": "lage",
     "start": "lage start --verbose",
     "startHostForGusa": "cd packages/app3 && yarn && yarn startForGusa",
+    "startHostForGusaMobile": "cd packages/app3 && yarn && yarn startForGusaMobile",
     "release": "beachball publish -y -b origin/main",
     "checkchange": "beachball check -b origin/main",
     "change": "beachball change -b origin/main"

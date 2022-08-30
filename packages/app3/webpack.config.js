@@ -12,6 +12,9 @@ const exposes = {
 
 const shared = { react: { singleton: true }, "react-dom": { singleton: true } };
 
+let serverPath = process.env.GUSA === 'desktop' ? 'https://glassesusa.dev/godnota/serverForGusa/' : "http://localhost:3003/server/";
+if (process.env.GUSA === 'mobile') serverPath = 'https://m.glassesusa.dev/godnota/serverForGusa/';
+
 const serverConfig = {
   optimization: { minimize: false },
   mode: 'development',
@@ -42,7 +45,7 @@ const serverConfig = {
     path: path.join(__dirname, process.env.GUSA ? "dist/serverForGusa" : "dist/server"),
     libraryTarget: "commonjs-module",
     chunkLoading: "async-http-node",
-    publicPath: process.env.GUSA ? 'https://glassesusa.dev/godnota/serverForGusa/' : "http://localhost:3003/server/",
+    publicPath: serverPath,
   },
   entry: {},
   target: "node",
