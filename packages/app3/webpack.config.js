@@ -17,7 +17,7 @@ const shared = {
 };
 
 const serverConfig = {
-  mode: 'production',
+  mode: 'development',
   optimization: {
     chunkIds: 'deterministic',
     moduleIds: 'deterministic',  
@@ -97,7 +97,7 @@ const serverConfig = {
 };
 
 const clientConfig = {
-  mode: 'production',
+  mode: 'development',
   optimization: {
     chunkIds: 'deterministic',
     moduleIds: 'deterministic',  

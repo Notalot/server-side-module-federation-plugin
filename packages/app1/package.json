@@ -12,12 +12,17 @@
     "test": "node test.js"
   },
   "dependencies": {
-    "nodemon": "^2.0.7",
-    "server-side-module-federation-plugin": "*",
+    "add": "^2.0.6",
     "axios": "^0.21.0",
+    "concurrently": "^6.0.0",
     "express": "^4.17.1",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
-    "concurrently": "^6.0.0"
+    "nodemon": "^2.0.7",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "server-side-module-federation-plugin": "*",
+    "yarn": "^1.22.19"
+  },
+  "devDependencies": {
+    "react": "^18.2.0"
   }
 }

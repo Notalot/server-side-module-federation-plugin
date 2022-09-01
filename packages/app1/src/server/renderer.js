@@ -1,9 +1,9 @@
 import { renderToString } from "react-dom/server";
 import React from "react";
-import App from "../components/App";
+import { App } from "../components/App";
 
-export default (useApp2 = false) => {
-  const html = renderToString(<App useApp2={useApp2} />);
+export default () => {
+  const html = renderToString(<App />);
   
   return { html, css: global.css || [] };
 };

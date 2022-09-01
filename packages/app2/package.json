@@ -9,8 +9,14 @@
     "start": "webpack serve"
   },
   "devDependencies": {
-    "server-side-module-federation-plugin": "*",
     "http-server": "^0.12.3",
-    "react": "^17.0.2"
+    "react": "^18.2.0",
+    "server-side-module-federation-plugin": "*"
+  },
+  "dependencies": {
+    "add": "^2.0.6",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "yarn": "^1.22.19"
   }
 }
